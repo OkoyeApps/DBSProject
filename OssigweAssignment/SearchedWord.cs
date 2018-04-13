@@ -16,6 +16,7 @@ namespace OssigweAssignment
         public string Word { get; set; } 
         public int NoOfSearchedTime { get; set; }
         public List<searchedFile> searchedFolders { get; set; }
+        public string LastSearchedWord { get; set; }
         public DateTime searched { get; set; }
     }
 }

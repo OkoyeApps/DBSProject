@@ -25,11 +25,12 @@ namespace OssigweAssignment
         JsonSerializer serializer;
         LinkLabel linkFolder;
         delegate void LinkLabelClickedEventHandler(object sender, EventArgs e);
-       
-        Tuple<TableLayoutPanel, List<Control>, List<int>, List<int>> ControlElementsToAdd;
-        List<int> columnsToAdd;
-        List<int> rowsToAdd;
+
+
         List<Control> ControlsToAdd;
+        List<Control> FoundItems;
+        List<Control> CountFound;
+        List<Control> ViewFound;
         public Initialization(Folder FParam, Files FLParam, JsonSerializer JsParam)
         {
             folder = FParam;
@@ -103,7 +104,7 @@ namespace OssigweAssignment
                         };
                         folder.Files.Add(file);
                     }
-                        counter++;
+                    counter++;
 
                 }
             }
@@ -128,7 +129,7 @@ namespace OssigweAssignment
                     ///we then deserialize it again and write to a temporary file inother to cross check our result.
                     var TextToWrite = JsonConvert.SerializeObject(FolderToAddToJson);
                     BinaryWriter BW = new BinaryWriter(File.Open(PathForBinary, FileMode.CreateNew));
-                    
+
                     BW.Write(TextToWrite);
                     BW.Close();
                     return;
@@ -145,9 +146,9 @@ namespace OssigweAssignment
                     if (!isPathAlreadyInMonitored)
                     {
                         folder.No = foldercount + 1;
-                        currentFoldersInFile.Add(folder);      
+                        currentFoldersInFile.Add(folder);
                     }
-                    else if(isPathAlreadyInMonitored)
+                    else if (isPathAlreadyInMonitored)
                     {
                         var newChangedFile = currentFoldersInFile.Where(x => x.FolderName == DirectoryInfo.FullName && x.NoOfSubDirectories != folder.NoOfSubDirectories || x.NoOfTxtFiles != folder.NoOfTxtFiles).FirstOrDefault();
                         if (newChangedFile != null)
@@ -156,11 +157,11 @@ namespace OssigweAssignment
                             newChangedFile.NoOfSubDirectories = folder.NoOfSubDirectories;
                             newChangedFile.Files = folder.Files;
                             newChangedFile.NoOfTxtFiles = folder.NoOfTxtFiles;
-                        }           
+                        }
                     }
                     UpdatedFileToWrite = JsonConvert.SerializeObject(currentFoldersInFile);
                     File.WriteAllText(pathForTempFile, UpdatedFileToWrite);
-                    using(BinaryWriter BW = new BinaryWriter(File.Open(PathForBinary, FileMode.CreateNew)))
+                    using (BinaryWriter BW = new BinaryWriter(File.Open(PathForBinary, FileMode.CreateNew)))
                     {
                         BW.Write(UpdatedFileToWrite);
                         BW.Close();
@@ -190,7 +191,7 @@ namespace OssigweAssignment
                 File.WriteAllText(@"C:\Users\Emmanuel\Desktop\TestFolderForFiles\temp.json", jsonToAddAgainForTest);
             };
             JArray jsonObject = JArray.Parse(AllText);
-            
+
             foreach (var item in jsonObject.ToList())
             {
                 var result = item.ToObject<Folder>(serializer);
@@ -238,7 +239,6 @@ namespace OssigweAssignment
                             LinkArea = new LinkArea(0, 100)
                         };
                         linkFolder.Links[0].LinkData = folder.FolderName;
-                        //linkFolder.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(controlInit.linkFolder_LinkClicked);
                         ControlsToAdd.Add(linkFolder);
 
                         if (linkFolder.Text.Length > 50)
@@ -263,7 +263,7 @@ namespace OssigweAssignment
             }
         }
 
-        public void SearchWordFromSavedFiles(RichTextBox richTextBox, TextBox textBox, List<Folder> folder, TableLayoutPanel TPanel, Form1 form)
+        public Tuple<List<Control>, List<Control>, List<Control>> SearchWordFromSavedFiles(RichTextBox richTextBox, TextBox textBox, List<Folder> folder,Form1 form)
         {
             string[] BlackList = new string[] { "is", "a", "the", "of", "this", "how", "all", "ago", "I", "me", "he", "he’ll", "he’s", "she", "she’ll", "she’s", "am", "in", "so", "is", "be", "let", "mr", "mrs", "we", "us", "you", "oh", "ok", "ex" };
             if (textBox.Text.Length > 1 && !BlackList.Contains(textBox.Text))
@@ -275,27 +275,49 @@ namespace OssigweAssignment
                 int columnCount = 2;
                 int rowCount = 2;
                 int tab = 7;
+                int yAxisForFile = 36;
+                int yAxisForView = 36;
+
                 int LineNoForFirstMatch = 0;
                 List<string> filePathToSearch = new List<string>();
                 List<int> totalOCcurenceForSavedFile = new List<int>();
-                var foldersToSearch = folder.Where(x => x.NoOfTxtFiles > 0).ToList();
                 List<string> foundWordAndFolder = new List<string>();
                 bool matchFound = false;
                 ControlsToAdd = new List<Control>();
-                rowsToAdd = new List<int>();
-                columnsToAdd = new List<int>();
-                //this part instantiates the files to search by removing all files that does not end with a .txt
+                ViewFound = new List<Control>();
+                CountFound = new List<Control>();
+                FoundItems = new List<Control>();
+
+                //This first checks the binary file for already indexed words and locations first, before checking the root tree
+                var foldersToSearch = folder.Where(x => x.NoOfTxtFiles > 0).ToList();
+                if (File.Exists(pathForSaveFile))
+                {
+                    var FirstReadFileContainingFirstIndex = File.ReadAllText(pathForSaveFile);
+                    var FilesToStartSearchingFrom = JsonConvert.DeserializeObject<List<SearchedWord>>(FirstReadFileContainingFirstIndex);
+                    var WordAlreadyIndexedObject = FilesToStartSearchingFrom.Where(x => x.Word == textBox.Text).FirstOrDefault();
+                    if (WordAlreadyIndexedObject != null)
+                    {
+                        WordAlreadyIndexedObject.searchedFolders.ForEach(x => filePathToSearch.Add(x.folderLocation));
+                    }
+                }
+                //this part instantiates the files to search by removing all files that does not end with a .txt now form the folders
                 if (foldersToSearch.Count > 0)
                 {
-                    var FilesToSearch = foldersToSearch.Select(x => x.Files).ToList();
-                    int counter = 0;
-                    for (int i = 0; i < FilesToSearch[0].Count; i++)
+                    ///---Suggestions
+                    ///you can try making this code more optimized by also limiting the folders to go through first
+                    ///by considering if the folder has been modified and if not if the previous search root folder includes it 
+                    ///
+                    ///---Suggestions
+                    var FilesToSearch = foldersToSearch.Select(x => x.Files).SingleOrDefault();
+                    var mainFilesTosearch = FilesToSearch.Select(x => x);
+                    foreach (var item in FilesToSearch)
                     {
-                        if (FilesToSearch[0][i].FileExtension == ".txt")
+                        var isFolderInView = filePathToSearch.Any(x => x == item.FileFullName);
+
+                        if (!isFolderInView)
                         {
-                            filePathToSearch.Add(FilesToSearch[0][i].FileFullName);
+                            filePathToSearch.Add(item.FileFullName);
                         }
-                        counter++;
                     }
                 }
                 foreach (var currentFolderToSearch in filePathToSearch)
@@ -304,50 +326,41 @@ namespace OssigweAssignment
                     {
 
                         //this just reads the lines one after the other to search line by line at first
-                            var allTextRead = File.ReadLines(currentFolderToSearch).ToList();
-                            var FullText = File.ReadAllText(currentFolderToSearch);
-                           
-                            int loopBreaker = 0;
-                            do
+                        var allTextRead = File.ReadLines(currentFolderToSearch).ToList();
+                        var FullText = File.ReadAllText(currentFolderToSearch);
+
+                        int loopBreaker = 0;
+                        do
+                        {
+                            for (int stringItem = 0; stringItem < allTextRead.Count; stringItem++)
                             {
-                                for (int stringItem = 0; stringItem < allTextRead.Count; stringItem++)
+                                var match = string.Compare(allTextRead[stringItem], textBox.Text, true);
+                                var wordsInLine = allTextRead[stringItem].Split(new char[] { ' ', '.' });
+
+                                foreach (var word in wordsInLine.ToList())
                                 {
-                                    var match = string.Compare(allTextRead[stringItem], textBox.Text, true);
-                                    var wordsInLine = allTextRead[stringItem].Split(new char[] { ' ', '.' });
-
-                                    foreach (var word in wordsInLine.ToList())
+                                    if (word.ToLower().Contains(textBox.Text.ToLower()))
                                     {
-                                        if (word.ToLower().Contains(textBox.Text.ToLower()))
+
+                                        totalOccurence++;
+                                        if (matchFound == false)
                                         {
-
-                                            totalOccurence++;
-                                            if (matchFound == false)
-                                            {
-                                                firstLineofWord = allTextRead[stringItem];
-                                                Label label2 = (Label)controlInit.labelForTable(tab, allTextRead[stringItem], labelType.col2, form);
-                                                LinkLabel linkLabel = (LinkLabel)controlInit.labelForTable(tab + 1, allTextRead[stringItem], labelType.col4, form);
-                                                LineNoForFirstMatch = stringItem;
-                                                matchFound = true;
-                                                foundWordAndFolder.Add(currentFolderToSearch);
-                                                linkLabel.Links[0].LinkData = currentFolderToSearch + ">"+textBox.Text;
-                                               
-
-                                            ControlsToAdd.Add(linkLabel);
-                                            columnsToAdd.Add(1);
-                                            rowsToAdd.Add(rowCount);
-                                            //Notice this was added twice because we are creating two different elements and they both need a row and a column
-                                            ControlsToAdd.Add(label2);
-                                            columnsToAdd.Add(0);
-                                            rowsToAdd.Add(rowCount);
-
-
+                                            firstLineofWord = allTextRead[stringItem];
+                                            Label label2 = (Label)controlInit.CreateControlForSearchResult(yAxisForFile, allTextRead[stringItem], labelType.col2);
+                                            LinkLabel linkLabel = (LinkLabel)controlInit.CreateControlForSearchResult(yAxisForView, allTextRead[stringItem], labelType.col1, form);
+                                            LineNoForFirstMatch = stringItem;
+                                            matchFound = true;
+                                            foundWordAndFolder.Add(currentFolderToSearch);
+                                            linkLabel.Links[0].LinkData = currentFolderToSearch + ">" + textBox.Text;
+                                            ViewFound.Add(linkLabel);
+                                            FoundItems.Add(label2);
                                         }
-                                        }
-                                        loopBreaker = stringItem;
                                     }
+                                    loopBreaker = stringItem;
                                 }
-                            } while (matchFound == false && loopBreaker > allTextRead.Count);
-               
+                            }
+                        } while (matchFound == false && loopBreaker > allTextRead.Count);
+
                         if (!string.IsNullOrWhiteSpace(richTextBox.Text))
                         {
                             //MessageBox.Show($"No match Found");
@@ -356,31 +369,27 @@ namespace OssigweAssignment
                     if (matchFound)
                     {
                         totalOCcurenceForSavedFile.Add(totalOccurence);
-                        var label = controlInit.labelForTable(tab, totalOccurence.ToString(), labelType.col3,form);
-                        ControlsToAdd.Add(label);
-                        rowsToAdd.Add(rowCount);
-                        columnsToAdd.Add(2);
-
+                        var label = controlInit.CreateControlForSearchResult(yAxisForFile, totalOccurence.ToString(), labelType.col3);
+                        CountFound.Add(label);
                         SaveSearchedFile(foundWordAndFolder, totalOCcurenceForSavedFile.ToArray(), textBox.Text);
-                        columnCount++; rowCount++;
+                        yAxisForFile += 35;yAxisForView += 35;
                     }
                     matchFound = false;
                     totalOccurence = 0;
-                    
-                }
 
-                controlInit.AddTableLayoutControl(ControlsToAdd, TPanel, columnsToAdd, rowsToAdd, form);
+                };
                 textBox.Text = ""; //this just makes the textbox blank again...
+                return Tuple.Create(FoundItems, CountFound, ViewFound);
             }
             else
             {
-                if (textBox.Text.Length == 1)
+                if (textBox.Text.Length == 1 || textBox.Text == "")
                 {
                     MessageBox.Show("Sorry you can't search for a one letter one");
-                    return;
+                    return null;
                 }
                 MessageBox.Show("Sorry this word is among the blacklist");
-                return;
+                return null;
             }
         }
 
@@ -389,7 +398,7 @@ namespace OssigweAssignment
         {
             tPanel.Controls.Add(control, col, row);
         }
-        public List<SearchedWord> SaveSearchedFile(List<string> searchedWordAndFolder,int[] occurence, string word)
+        public List<SearchedWord> SaveSearchedFile(List<string> searchedWordAndFolder, int[] occurence, string word)
         {
             SearchedWord SW = null;
             SearchedWordFromFile = null;
@@ -400,11 +409,11 @@ namespace OssigweAssignment
             {
                 for (int i = 0; i < searchedWordAndFolder.Count; i++)
                 {
-                        Sf = new searchedFile()
-                        {
-                            folderLocation = searchedWordAndFolder[i],
-                            wordOccurrenceInFile = occurence[i]
-                        };
+                    Sf = new searchedFile()
+                    {
+                        folderLocation = searchedWordAndFolder[i],
+                        wordOccurrenceInFile = occurence[i]
+                    };
                     SWordListItem.Add(Sf);
                 }
                 SW = new SearchedWord()
@@ -412,22 +421,23 @@ namespace OssigweAssignment
                     Id = 1,
                     NoOfSearchedTime = 1,
                     searched = DateTime.Now,
-                    Word = word
+                    Word = word,
+                    LastSearchedWord = word
                 };
-                SW.searchedFolders= SWordListItem;
+                SW.searchedFolders = SWordListItem;
                 searchedWordListItem.Add(SW);
             }
             //This part saves the word as json in a file
-                serializer = new JsonSerializer()
-                {
-                    Formatting = Formatting.Indented
-                };
-                string AllSavedFileText = "";
+            serializer = new JsonSerializer()
+            {
+                Formatting = Formatting.Indented
+            };
+            string AllSavedFileText = "";
 
             if (File.Exists(pathForSaveFile))
             {
                 AllSavedFileText = File.ReadAllText(pathForSaveFile);
-               
+
                 var result = JsonConvert.DeserializeObject<List<SearchedWord>>(AllSavedFileText);
                 var previousSearch = result.Where(x => x.Word.ToLower() == word.ToLower()).FirstOrDefault();
                 if (previousSearch != null)
@@ -435,6 +445,8 @@ namespace OssigweAssignment
                     previousSearch.NoOfSearchedTime = previousSearch.NoOfSearchedTime + 1;
                     previousSearch.searchedFolders = SW.searchedFolders;
                     previousSearch.searched = DateTime.Now;
+                    previousSearch.LastSearchedWord = word;
+                      
                     File.WriteAllText(pathForSaveFile, JsonConvert.SerializeObject(result));
                     return result;
                 }
