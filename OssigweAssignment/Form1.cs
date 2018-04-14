@@ -41,7 +41,6 @@ namespace OssigweAssignment
                     var result = init.SearchWordFromSavedFiles(this.textReader, this.textBox1, FoldersToSearch, this);
                     if (result != null)
                     {
-
                         panel19.Controls.Clear();
                         panel16.Controls.Clear();
                         panel15.Controls.Clear();
@@ -257,6 +256,7 @@ namespace OssigweAssignment
                 }
             }
         }
+        //This method was used to recursively check throug child Nodes if it is been checked.
        void RecursiveNodeRemoval(TreeNodeCollection nodes)
         {
             foreach (TreeNode item in nodes)
