@@ -11,9 +11,10 @@ namespace OssigweAssignment
 {
     public class InitializeSearchedFolder
     {
+        
         public void LoadDirectory(string Dir, TreeView treeview, ProgressBar progressBar)
         {
-            DirectoryInfo di = new DirectoryInfo(Dir);
+            DirectoryInfo  di = new DirectoryInfo(Dir);
             //setting progress bar maximum value
             //set this later
             progressBar.Maximum = Directory.GetFiles(Dir, "*.txt*", SearchOption.AllDirectories).Length + Directory.GetDirectories(Dir, "*", SearchOption.AllDirectories).Length;

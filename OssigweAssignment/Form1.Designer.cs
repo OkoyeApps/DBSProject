@@ -56,13 +56,15 @@
             this.button1 = new System.Windows.Forms.Button();
             this.OpenFile = new System.Windows.Forms.Button();
             this.panel16 = new System.Windows.Forms.Panel();
-            this.panel17 = new System.Windows.Forms.Panel();
             this.label7 = new System.Windows.Forms.Label();
             this.panel15 = new System.Windows.Forms.Panel();
             this.label9 = new System.Windows.Forms.Label();
             this.panel19 = new System.Windows.Forms.Panel();
             this.label8 = new System.Windows.Forms.Label();
             this.tabControl2 = new System.Windows.Forms.TabControl();
+            this.label5 = new System.Windows.Forms.Label();
+            this.label12 = new System.Windows.Forms.Label();
+            this.button2 = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
             this.tabPage4.SuspendLayout();
             this.panel6.SuspendLayout();
@@ -71,7 +73,6 @@
             this.panel18.SuspendLayout();
             this.panel2.SuspendLayout();
             this.panel16.SuspendLayout();
-            this.panel17.SuspendLayout();
             this.panel15.SuspendLayout();
             this.panel19.SuspendLayout();
             this.tabControl2.SuspendLayout();
@@ -109,6 +110,7 @@
             // 
             // textReader
             // 
+            this.textReader.AutoWordSelection = true;
             this.textReader.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.textReader.Location = new System.Drawing.Point(291, 6);
             this.textReader.Name = "textReader";
@@ -122,6 +124,8 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel6.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel6.Controls.Add(this.label12);
+            this.panel6.Controls.Add(this.label5);
             this.panel6.Controls.Add(this.label16);
             this.panel6.Controls.Add(this.label15);
             this.panel6.Controls.Add(this.label14);
@@ -254,6 +258,7 @@
             // 
             this.panel5.BackColor = System.Drawing.SystemColors.InactiveCaption;
             this.panel5.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel5.Controls.Add(this.button2);
             this.panel5.Controls.Add(this.progressBar1);
             this.panel5.Controls.Add(this.treeView1);
             this.panel5.Controls.Add(this.panel18);
@@ -284,10 +289,12 @@
             // 
             // treeView1
             // 
+            this.treeView1.CheckBoxes = true;
+            
             this.treeView1.Location = new System.Drawing.Point(-4, 41);
             this.treeView1.Name = "treeView1";
             this.treeView1.Scrollable = false;
-            this.treeView1.Size = new System.Drawing.Size(228, 534);
+            this.treeView1.Size = new System.Drawing.Size(229, 534);
             this.treeView1.TabIndex = 2;
             this.treeView1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.treeView1_MouseMove);
             // 
@@ -314,7 +321,6 @@
             // 
             // textBox1
             // 
-            this.textBox1.CharacterCasing = System.Windows.Forms.CharacterCasing.Lower;
             this.textBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.textBox1.ImeMode = System.Windows.Forms.ImeMode.Katakana;
             this.textBox1.Location = new System.Drawing.Point(168, 3);
@@ -352,32 +358,25 @@
             this.OpenFile.TabIndex = 3;
             this.OpenFile.Text = "Add Folder To Monitor";
             this.OpenFile.UseVisualStyleBackColor = true;
-            this.OpenFile.Click += new System.EventHandler(this.button1_Click_1);
+            this.OpenFile.Click += new System.EventHandler(this.OpenFile_Click);
             // 
             // panel16
             // 
             this.panel16.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panel16.Controls.Add(this.panel17);
-            this.panel16.Location = new System.Drawing.Point(234, 59);
+            this.panel16.Controls.Add(this.label7);
+            this.panel16.Location = new System.Drawing.Point(234, 50);
             this.panel16.Name = "panel16";
             this.panel16.Size = new System.Drawing.Size(742, 517);
             this.panel16.TabIndex = 5;
             // 
-            // panel17
-            // 
-            this.panel17.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panel17.Controls.Add(this.label7);
-            this.panel17.Location = new System.Drawing.Point(-1, -1);
-            this.panel17.Name = "panel17";
-            this.panel17.Size = new System.Drawing.Size(742, 34);
-            this.panel17.TabIndex = 0;
-            // 
             // label7
             // 
+            this.label7.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.label7.Dock = System.Windows.Forms.DockStyle.Top;
             this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label7.Location = new System.Drawing.Point(257, 0);
+            this.label7.Location = new System.Drawing.Point(0, 0);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(246, 16);
+            this.label7.Size = new System.Drawing.Size(740, 33);
             this.label7.TabIndex = 0;
             this.label7.Text = "Found Files";
             this.label7.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -389,9 +388,9 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel15.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panel15.Controls.Add(this.label9);
-            this.panel15.Location = new System.Drawing.Point(1048, 59);
+            this.panel15.Location = new System.Drawing.Point(1058, 50);
             this.panel15.Name = "panel15";
-            this.panel15.Size = new System.Drawing.Size(96, 523);
+            this.panel15.Size = new System.Drawing.Size(86, 517);
             this.panel15.TabIndex = 4;
             // 
             // label9
@@ -400,16 +399,16 @@
             this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label9.Location = new System.Drawing.Point(-1, 0);
             this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(93, 33);
+            this.label9.Size = new System.Drawing.Size(86, 33);
             this.label9.TabIndex = 1;
             // 
             // panel19
             // 
             this.panel19.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panel19.Controls.Add(this.label8);
-            this.panel19.Location = new System.Drawing.Point(973, 59);
+            this.panel19.Location = new System.Drawing.Point(976, 50);
             this.panel19.Name = "panel19";
-            this.panel19.Size = new System.Drawing.Size(78, 517);
+            this.panel19.Size = new System.Drawing.Size(84, 517);
             this.panel19.TabIndex = 6;
             // 
             // label8
@@ -418,7 +417,7 @@
             this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label8.Location = new System.Drawing.Point(-1, -1);
             this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(88, 34);
+            this.label8.Size = new System.Drawing.Size(86, 34);
             this.label8.TabIndex = 0;
             this.label8.Text = "Count";
             this.label8.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -436,6 +435,41 @@
             this.tabControl2.SizeMode = System.Windows.Forms.TabSizeMode.FillToRight;
             this.tabControl2.TabIndex = 3;
             this.tabControl2.TabStop = false;
+            // 
+            // label5
+            // 
+            this.label5.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label5.Location = new System.Drawing.Point(4, 149);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(137, 19);
+            this.label5.TabIndex = 11;
+            this.label5.Text = "Total indexed word";
+            this.label5.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // label12
+            // 
+            this.label12.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.label12.Location = new System.Drawing.Point(129, 149);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(137, 19);
+            this.label12.TabIndex = 12;
+            this.label12.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // button2
+            // 
+            this.button2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button2.Location = new System.Drawing.Point(-1, 507);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(221, 36);
+            this.button2.TabIndex = 4;
+            this.button2.Text = "Remove Node";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
             // Form1
             // 
@@ -459,7 +493,6 @@
             this.panel2.ResumeLayout(false);
             this.panel2.PerformLayout();
             this.panel16.ResumeLayout(false);
-            this.panel17.ResumeLayout(false);
             this.panel15.ResumeLayout(false);
             this.panel19.ResumeLayout(false);
             this.tabControl2.ResumeLayout(false);
@@ -477,7 +510,6 @@
         private System.Windows.Forms.Panel panel15;
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Panel panel16;
-        private System.Windows.Forms.Panel panel17;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Panel panel2;
         private System.Windows.Forms.Button OpenFile;
@@ -502,6 +534,9 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.RichTextBox textReader;
         private System.Windows.Forms.Panel panel7;
+        private System.Windows.Forms.Label label12;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Button button2;
     }
 }
 

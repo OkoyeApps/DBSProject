@@ -45,7 +45,7 @@ namespace OssigweAssignment
                 linkLabel.Location = new System.Drawing.Point(3, yAxis);
                 linkLabel.Name = "linkLabel1";
                 linkLabel.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-                linkLabel.Size = new System.Drawing.Size(64, 25);
+                linkLabel.Size = new System.Drawing.Size(86, 33);
                 linkLabel.TabIndex = 0;
                 linkLabel.TabStop = true;
                 linkLabel.Text = "View";
@@ -59,8 +59,8 @@ namespace OssigweAssignment
                 label = new Label();
                 label.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
                 label.Location = new System.Drawing.Point(8, yAxis);
-                label.Name = "linkLabel2";
-                label.Size = new System.Drawing.Size(64, 25);
+                label.Name = "label";
+                label.Size = new System.Drawing.Size(88, 33);
                 label.TabIndex = 3;
                 label.TabStop = true;
                 label.Text = labelText;

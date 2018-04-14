@@ -11,6 +11,7 @@ using System.Windows.Forms;
 using Newtonsoft.Json;
 using System.Dynamic;
 using Newtonsoft.Json.Linq;
+using System.Security.AccessControl;
 
 namespace OssigweAssignment
 {
@@ -38,11 +39,52 @@ namespace OssigweAssignment
                 if (Directory.Exists(FoldersToSearch[0].FolderName))
                 {
                     var result = init.SearchWordFromSavedFiles(this.textReader, this.textBox1, FoldersToSearch, this);
-                    panel16.Controls.AddRange(result.Item1.ToArray());
-                    panel19.Controls.AddRange(result.Item2.ToArray());
-                    panel15.Controls.AddRange(result.Item3.ToArray());
+                    if (result != null)
+                    {
+
+                        panel19.Controls.Clear();
+                        panel16.Controls.Clear();
+                        panel15.Controls.Clear();
+                        SetTableHeaders();
+                        panel16.Controls.AddRange(result.Item1.ToArray());
+                        panel19.Controls.AddRange(result.Item2.ToArray());
+                        panel15.Controls.AddRange(result.Item3.ToArray());
+                    }
+                    return;
                 }
             }
+        }
+        public void SetTableHeaders()
+        {
+            this.label7.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.label7.Dock = System.Windows.Forms.DockStyle.Top;
+            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label7.Location = new System.Drawing.Point(0, 0);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(740, 33);
+            this.label7.TabIndex = 0;
+            this.label7.Text = "Found Files";
+            this.label7.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            panel16.Controls.Add(label7);
+
+            this.label8.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label8.Location = new System.Drawing.Point(-1, -1);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(86, 34);
+            this.label8.TabIndex = 0;
+            this.label8.Text = "Count";
+            this.label8.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            panel19.Controls.Add(label8);
+
+            this.label9.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label9.Location = new System.Drawing.Point(-1, 0);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(86, 33);
+            this.label9.TabIndex = 1;
+            this.panel15.Controls.Add(label9);
+
         }
 
         public void Clicked_EVentHandler(object sender, EventArgs e)
@@ -68,19 +110,22 @@ namespace OssigweAssignment
             String temp = textReader.Text;
             textReader.Text = "";
             textReader.Text = temp;
+            bool matchfound = false;
             do
             {
                 //Searches the text in the files
-                textReader.Find(arrayOfStringToUser[1], index, textReader.TextLength, RichTextBoxFinds.None);
-                //this just adds color to the 
+              var result =   textReader.Find(arrayOfStringToUser[1], index, textReader.TextLength, RichTextBoxFinds.None);
+                //this just adds color to the word
                 textReader.SelectionBackColor = Color.Yellow;
                 if (index == 0)
                 {
                     //this is added when a match is found for the search
-                    FirstWordLocation = textReader.Text.IndexOf(arrayOfStringToUser[1], index);
+                    FirstWordLocation = result;
+                    //textReader.Text.IndexOf(arrayOfStringToUser[1], index);
                 }
                 //this increaments the index to continue searching for next value
                 index = textReader.Text.IndexOf(arrayOfStringToUser[1], index) + 1;
+
             } while (index < textReader.Text.LastIndexOf(arrayOfStringToUser[1]));
             
             //this points the cursor to the position of the found word
@@ -88,9 +133,12 @@ namespace OssigweAssignment
             tabControl2.SelectTab(1);
 
             //this is used for the reporting side bar
-            if (File.Exists(pathForSaveFile))
+            if (File.Exists(pathForSaveFile) && File.Exists(pathForSaveFolder))
             {
                 var allSearchText = File.ReadAllText(pathForSaveFile);
+                var AllIndexedWord = File.ReadAllText(pathForSaveFolder);
+                var ListOfFolders = JsonConvert.DeserializeObject<List<Folder>>(AllIndexedWord);
+                var TotalIndexedWord = ListOfFolders.Sum(x => x.Files.Sum(y => y.FileLength));
                 var ListOfSearchedWords = JsonConvert.DeserializeObject<List<SearchedWord>>(allSearchText);
                 var mostSearchedOrder =  ListOfSearchedWords.OrderByDescending(x => x.NoOfSearchedTime).ToArray();
                 var highestWordOder = ListOfSearchedWords.OrderByDescending(x => x.Word.Length).ToArray();
@@ -98,6 +146,7 @@ namespace OssigweAssignment
                 label16.Text = highestWordOder[0].Word;
                 label15.Text = highestWordOder[highestWordOder.Length -1].Word;
                 label13.Text = arrayOfStringToUser[1];
+                label12.Text = TotalIndexedWord.ToString();
             } 
         }
 
@@ -110,6 +159,7 @@ namespace OssigweAssignment
             var SelectedFolderObject = init.PopulateFolderView();
             init.SaveFoldernames(SelectedFolderObject);
             init.InitializeLinkListsForFile(this.panel5, this.treeView1, this.progressBar1);
+            //RemoveTreeNode();
         }
 
         private void treeView1_MouseMove(object sender, MouseEventArgs e)
@@ -130,6 +180,101 @@ namespace OssigweAssignment
             {
                 this.toolTip1.SetToolTip(this.treeView1, "");
             }
+        }
+        private void RemoveTreeNode()
+        {
+            var fileName = this.treeView1.Nodes.Count;
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            RemoveCheckedNodes(this.treeView1.Nodes);
+        }
+        List<TreeNode> CheckedNodes = new List<TreeNode>();
+        List<string> FolderNamesToRemove = new List<string>();
+        void RemoveCheckedNodes(TreeNodeCollection nodes)
+        {
+            bool isSubFolder = false;
+            bool isFolder = false;
+            //DirectorySecurity ds = new DirectorySecurity();
+            //var fs = new FileSystemAccessRule();
+            foreach (TreeNode node in nodes)
+            {
+                if (Directory.Exists(node.Tag.ToString()))
+                {
+                    if (node.Checked)
+                    {
+                        CheckedNodes.Add(node);
+                        isFolder = true;
+                    }
+                    else
+                    {
+                        Console.WriteLine(node.Tag);
+                        RecursiveNodeRemoval(node.Nodes);
+                        isSubFolder = true;
+                    }
+
+                }
+            }
+            if (isSubFolder)
+            {
+                MessageBox.Show("Sorry you cannot select a sub-folder for Removal. \n This is because the system monitors the root folder and with its sub-folders. \n To delete Sub-folder you have to delete the parent folder");
+            }
+            if (CheckedNodes.Count > 0)
+            {
+            foreach (TreeNode nodeToRemove in CheckedNodes)
+            {
+                var folderName = nodeToRemove.Tag.ToString();
+                if (Directory.Exists(folderName))
+                {
+                    FolderNamesToRemove.Add(folderName);
+                    nodes.Remove(nodeToRemove);
+                }
+            }
+                if (FolderNamesToRemove.Count > 0)
+                {
+                    if (File.Exists(pathForSaveFolder))
+                    {
+                        var alltextRead = File.ReadAllText(pathForSaveFolder);
+                        var allFolderInFile = JsonConvert.DeserializeObject<List<Folder>>(alltextRead);
+                        foreach (var item in FolderNamesToRemove)
+                        {
+                            var FolderToRemove = allFolderInFile.Where(x => x.FolderName == item).FirstOrDefault();
+                            if (FolderToRemove != null)
+                            {
+                                allFolderInFile.Remove(FolderToRemove);
+
+                            }
+                        }
+                        var newFoldersToAdd = JsonConvert.SerializeObject(allFolderInFile);
+                        File.WriteAllText(pathForSaveFolder, newFoldersToAdd);
+                        using (BinaryWriter BW = new BinaryWriter(File.Open(PathForBinary, FileMode.OpenOrCreate)))
+                        {
+                            BW.Write(newFoldersToAdd);
+                            BW.Close();
+                        }
+                    }
+                }
+            }
+        }
+       void RecursiveNodeRemoval(TreeNodeCollection nodes)
+        {
+            foreach (TreeNode item in nodes)
+            {
+                if (!item.Tag.ToString().EndsWith(".txt") && !item.Tag.ToString().EndsWith(".xml"))
+                {
+                    if (item.Checked)
+                    {
+                        //item.Checked = false;
+                        CheckedNodes.Add(item);
+                    }
+                    else
+                    {
+                        RecursiveNodeRemoval(item.Nodes);
+                    }
+                }
+            }
+            return;
         }
     }
 }

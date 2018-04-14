@@ -342,9 +342,9 @@ namespace OssigweAssignment
 
                                 foreach (var word in wordsInLine.ToList())
                                 {
-                                    if (word.ToLower().Contains(textBox.Text.ToLower()))
+                                   var isFound =  string.Equals(textBox.Text, word, StringComparison.OrdinalIgnoreCase);
+                                    if (word.ToLowerInvariant().Contains(textBox.Text.ToLower()))
                                     {
-
                                         totalOccurence++;
                                         if (matchFound == false)
                                         {
@@ -387,9 +387,14 @@ namespace OssigweAssignment
             }
             else
             {
-                if (textBox.Text.Length == 1 || textBox.Text == "")
+                if (textBox.Text.Length == 1)
                 {
                     MessageBox.Show("Sorry you can't search for a one letter one");
+                    return null;
+                }
+                if (textBox.Text == "")
+                {
+                    MessageBox.Show("Please input a word for search");
                     return null;
                 }
                 MessageBox.Show("Sorry this word is among the blacklist");
