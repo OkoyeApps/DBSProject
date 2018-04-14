@@ -17,21 +17,23 @@ namespace OssigweAssignment
     public partial class Form1 : Form
     {
         Initialization init = new Initialization(new Folder(), new Files(), new JsonSerializer());
-        const string pathForTempFile = @"C:\Users\Emmanuel\Desktop\TestFolderForFiles\Json.json";
+        const string pathForSaveFolder = @"C:\Users\Emmanuel\Desktop\TestFolderForFiles\Json.json";
         const string pathForSaveFile = @"C:\Users\Emmanuel\Desktop\TestFolderForFiles\savedWords.json";
         const string PathForBinary = @"C:\Users\Emmanuel\Desktop\TestFolderForFiles\binary.bin";
-        private string allSearchTExt;
 
         public Form1()
         {
             InitializeComponent();
-            init.InitializeLinkListsForFile(this.panel5);
-            ControlInitializer cc = new ControlInitializer();
+            treeView1.Nodes.Clear();
+            toolTip1.ShowAlways = true;
+            progressBar1.Value = 0;
+            init.InitializeLinkListsForFile(this.panel5, this.treeView1, this.progressBar1);
+            //this.progressBar1.Hide();
         }
         private void button1_Click_1(object sender, EventArgs e)
         {
-            var FoldersToSearch = init.GetSavedFoldersFromFile(@"C:\Users\Emmanuel\Desktop\TestFolderForFiles\Json.json");
-            if (FoldersToSearch.Count > 0)
+            var FoldersToSearch = init.GetSavedFoldersFromFile(pathForSaveFolder);
+            if (FoldersToSearch != null)
             {
                 if (Directory.Exists(FoldersToSearch[0].FolderName))
                 {
@@ -45,12 +47,8 @@ namespace OssigweAssignment
 
         public void Clicked_EVentHandler(object sender, EventArgs e)
         {
+            //this listens for the click event of the lik label that shows the view for searches
             Console.WriteLine("clicked");
-        }
-
-        private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            Console.WriteLine(e.Link.LinkData);
         }
 
         public void linkFolder_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
@@ -59,19 +57,12 @@ namespace OssigweAssignment
             var arrayOfStringToUser = linkToOpen.Split('>');
             int index = 0;
             int FirstWordLocation = 0;
-            string searchedWord = "";
-            string LastSearchedWord = "";
-            string mostSearchedWord = "";
-            string LeastSearchedWord = "";
-            string LongestSearchedWord = "";
-            string ShortestSearchedWord = "";
             SearchedWord SearchWordItem = new SearchedWord();
             ReportClass Report = new ReportClass();
-            
-
+      
             if (File.Exists(arrayOfStringToUser[0]))
             {
-                var allText = File.ReadAllText(arrayOfStringToUser[0]);
+               var allText = File.ReadAllText(arrayOfStringToUser[0]);
                this.textReader.Text = allText;
             }
             String temp = textReader.Text;
@@ -85,14 +76,18 @@ namespace OssigweAssignment
                 textReader.SelectionBackColor = Color.Yellow;
                 if (index == 0)
                 {
+                    //this is added when a match is found for the search
                     FirstWordLocation = textReader.Text.IndexOf(arrayOfStringToUser[1], index);
                 }
-                //this is added when a match is found for the search
+                //this increaments the index to continue searching for next value
                 index = textReader.Text.IndexOf(arrayOfStringToUser[1], index) + 1;
-                //firstWordFound = textReader.Text.IndexOf(arrayOfStringToUser[1], index);
             } while (index < textReader.Text.LastIndexOf(arrayOfStringToUser[1]));
+            
+            //this points the cursor to the position of the found word
             textReader.SelectionStart = FirstWordLocation;
             tabControl2.SelectTab(1);
+
+            //this is used for the reporting side bar
             if (File.Exists(pathForSaveFile))
             {
                 var allSearchText = File.ReadAllText(pathForSaveFile);
@@ -108,9 +103,33 @@ namespace OssigweAssignment
 
         private void OpenFile_Click(object sender, EventArgs e)
         {
+            //this responds to the click event of the AddFolderToMonitor button
+            treeView1.Nodes.Clear();
+            toolTip1.ShowAlways = true;
+            progressBar1.Value = 0;
             var SelectedFolderObject = init.PopulateFolderView();
             init.SaveFoldernames(SelectedFolderObject);
-            init.InitializeLinkListsForFile(this.panel5);
+            init.InitializeLinkListsForFile(this.panel5, this.treeView1, this.progressBar1);
+        }
+
+        private void treeView1_MouseMove(object sender, MouseEventArgs e)
+        {
+            // Get the node at the current mouse pointer location.  
+            TreeNode theNode = this.treeView1.GetNodeAt(e.X, e.Y);
+
+            // Set a ToolTip only if the mouse pointer is actually paused on a node.  
+            if (theNode != null && theNode.Tag != null)
+            {
+                // Change the ToolTip only if the pointer moved to a new node.  
+                if (theNode.Tag.ToString() != this.toolTip1.GetToolTip(this.treeView1))
+                    this.toolTip1.SetToolTip(this.treeView1, theNode.Tag.ToString());
+
+            }
+            // Pointer is not over a node so clear the ToolTip.
+            else
+            {
+                this.toolTip1.SetToolTip(this.treeView1, "");
+            }
         }
     }
 }
