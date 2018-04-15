@@ -57,59 +57,118 @@ namespace OssigweAssignment
             }
             return null;
         }
-        public void SaveFoldernames(FolderBrowserDialog folderDialog)
+       public List<Folder> InitializeFoldersToSave(List<string> selectedPaths)
         {
-            if (folderDialog == null)
-                return;
-            if (string.IsNullOrEmpty(folderDialog.SelectedPath))
-                return;
+            if (selectedPaths == null)
+                return null;
+            List<Folder> ListOfFoldersToAdd = new List<Folder>();
 
-            var TempFolderName = folderDialog.SelectedPath;
-            var FolderName = Path.GetDirectoryName(TempFolderName);
-            var labelText = TempFolderName.Split(new char[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
-            var text = labelText.LastOrDefault();
-            var FolderFullPath = Path.GetFullPath(TempFolderName);
-
-            folder = new Folder();
-
-            DirectoryInfo = new DirectoryInfo(FolderFullPath); //This code is used to the current selected directory
-            var allFIlesInDirectory = DirectoryInfo.EnumerateFiles("*", SearchOption.AllDirectories).ToList();
-            var allSubDirectories = DirectoryInfo.EnumerateDirectories("*", SearchOption.AllDirectories);
-            int counter = 1;
-            if (DirectoryInfo.Exists)
+            foreach (var path in selectedPaths)
             {
-                folder.FolderName = DirectoryInfo.FullName;
-                folder.NoOfFiles = allFIlesInDirectory.Count();
-                folder.RootDirectory = DirectoryInfo.Root.ToString();
-                folder.Created = DirectoryInfo.CreationTime.Date.ToLocalTime();
-                folder.No = counter;
-                folder.NoOfTxtFiles = allFIlesInDirectory.Where(x => x.Extension == ".txt").Count();
-                folder.TimeFound = DateTime.Now.Date.ToLocalTime();
-                folder.NoOfSubDirectories = allSubDirectories.Count();
-                folder.Name = text;
-                foreach (var item in allFIlesInDirectory)
-                {
-                    if (item.Extension == ".txt" || item.Extension == ".xml")
-                    {
-                        file = new Files
-                        {
-                            FileExtension = item.Extension,
-                            FileLength = item.Length,
-                            FileName = item.Name,
-                            TimeFound = item.CreationTime.Date,
-                            No = counter,
-                            CurrentDirectory = item.DirectoryName,
-                            RootFolder = item.Directory.FullName,
-                            FileFullName = item.FullName
-                        };
-                        folder.Files.Add(file);
-                    }
-                    counter++;
+                var TempFolderName = path;
+                var FolderName = Path.GetDirectoryName(TempFolderName);
+                var labelText = TempFolderName.Split(new char[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
+                var text = labelText.LastOrDefault();
+                var FolderFullPath = Path.GetFullPath(TempFolderName);
 
+                folder = new Folder();
+
+                DirectoryInfo = new DirectoryInfo(FolderFullPath); //This code is used to the current selected directory
+                var allFIlesInDirectory = DirectoryInfo.EnumerateFiles("*", SearchOption.AllDirectories).ToList();
+                var allSubDirectories = DirectoryInfo.EnumerateDirectories("*", SearchOption.AllDirectories);
+                int counter = 1;
+                if (DirectoryInfo.Exists)
+                {
+                    folder.FolderName = DirectoryInfo.FullName;
+                    folder.NoOfFiles = allFIlesInDirectory.Count();
+                    folder.RootDirectory = DirectoryInfo.Root.ToString();
+                    folder.Created = DirectoryInfo.CreationTime.Date.ToLocalTime();
+                    folder.No = counter;
+                    folder.NoOfTxtFiles = allFIlesInDirectory.Where(x => x.Extension == ".txt").Count();
+                    folder.TimeFound = DateTime.Now.Date.ToLocalTime();
+                    folder.NoOfSubDirectories = allSubDirectories.Count();
+                    folder.Name = text;
+                    foreach (var item in allFIlesInDirectory)
+                    {
+                        if (item.Extension == ".txt" || item.Extension == ".xml")
+                        {
+                            file = new Files
+                            {
+                                FileExtension = item.Extension,
+                                FileLength = item.Length,
+                                FileName = item.Name,
+                                TimeFound = item.CreationTime.Date,
+                                No = counter,
+                                CurrentDirectory = item.DirectoryName,
+                                RootFolder = item.Directory.FullName,
+                                FileFullName = item.FullName
+                            };
+                            folder.Files.Add(file);
+                        }
+                        counter++;
+                    }
+                    ListOfFoldersToAdd.Add(folder);
                 }
             }
-
+            return ListOfFoldersToAdd;
+        }
+        //Use this method o update the file changes later tomorrow
+        public void SaveFoldernames(FolderBrowserDialog folderDialog = null, List<string> SelectedPaths = null)
+        {
             List<Folder> FolderToAddToJson = new List<Folder>();
+            bool newFolderReturned = false;
+            if (folderDialog != null)
+            {
+                var TempFolderName = folderDialog.SelectedPath;
+                var FolderName = Path.GetDirectoryName(TempFolderName);
+                var labelText = TempFolderName.Split(new char[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
+                var text = labelText.LastOrDefault();
+                var FolderFullPath = Path.GetFullPath(TempFolderName);
+
+                folder = new Folder();
+
+                DirectoryInfo = new DirectoryInfo(FolderFullPath); //This code is used to the current selected directory
+                var allFIlesInDirectory = DirectoryInfo.EnumerateFiles("*", SearchOption.AllDirectories).ToList();
+                var allSubDirectories = DirectoryInfo.EnumerateDirectories("*", SearchOption.AllDirectories);
+                int counter = 1;
+                if (DirectoryInfo.Exists)
+                {
+                    folder.FolderName = DirectoryInfo.FullName;
+                    folder.NoOfFiles = allFIlesInDirectory.Count();
+                    folder.RootDirectory = DirectoryInfo.Root.ToString();
+                    folder.Created = DirectoryInfo.CreationTime.Date.ToLocalTime();
+                    folder.No = counter;
+                    folder.NoOfTxtFiles = allFIlesInDirectory.Where(x => x.Extension == ".txt").Count();
+                    folder.TimeFound = DateTime.Now.Date.ToLocalTime();
+                    folder.NoOfSubDirectories = allSubDirectories.Count();
+                    folder.Name = text;
+                    foreach (var item in allFIlesInDirectory)
+                    {
+                        if (item.Extension == ".txt" || item.Extension == ".xml")
+                        {
+                            file = new Files
+                            {
+                                FileExtension = item.Extension,
+                                FileLength = item.Length,
+                                FileName = item.Name,
+                                TimeFound = item.CreationTime.Date,
+                                No = counter,
+                                CurrentDirectory = item.DirectoryName,
+                                RootFolder = item.Directory.FullName,
+                                FileFullName = item.FullName
+                            };
+                            folder.Files.Add(file);
+                        }
+                        counter++;
+
+                    }
+                }
+            }
+            if (SelectedPaths != null)
+            {
+                FolderToAddToJson = InitializeFoldersToSave(SelectedPaths);
+                newFolderReturned = true;
+            }
             if (!File.Exists(pathForSavedFolder))
             {
                 FolderToAddToJson.Add(folder);
@@ -151,12 +210,17 @@ namespace OssigweAssignment
                     else if (isPathAlreadyInMonitored)
                     {
                         var newChangedFile = currentFoldersInFile.Where(x => x.FolderName == DirectoryInfo.FullName && x.NoOfSubDirectories != folder.NoOfSubDirectories || x.NoOfTxtFiles != folder.NoOfTxtFiles).FirstOrDefault();
+
                         if (newChangedFile != null)
                         {
                             newChangedFile.NoOfFiles = folder.NoOfFiles;
                             newChangedFile.NoOfSubDirectories = folder.NoOfSubDirectories;
                             newChangedFile.Files = folder.Files;
                             newChangedFile.NoOfTxtFiles = folder.NoOfTxtFiles;
+                        }
+                        else if(newFolderReturned == true)
+                        {
+                            currentFoldersInFile = FolderToAddToJson;
                         }
                     }
                     UpdatedFileToWrite = JsonConvert.SerializeObject(currentFoldersInFile);
@@ -190,14 +254,17 @@ namespace OssigweAssignment
                 var jsonToAddAgainForTest = JsonConvert.SerializeObject(newJsonObject);
                 File.WriteAllText(@"C:\Users\Emmanuel\Desktop\TestFolderForFiles\temp.json", jsonToAddAgainForTest);
             };
-            JArray jsonObject = JArray.Parse(AllText);
-
-            foreach (var item in jsonObject.ToList())
-            {
-                var result = item.ToObject<Folder>(serializer);
-                FoldersFromFile.Add(result);
-            }
-            return FoldersFromFile;
+            //JArray jsonObject = JArray.Parse(AllText);
+            var AllFoldersInFile = JsonConvert.DeserializeObject<List<Folder>>(AllText);
+            ///Am trying to initiatiate file added and file removal
+            
+            //foreach (var item in jsonObject.ToList())
+            //{
+            //    var result = item.ToObject<Folder>(serializer);
+                
+            //    FoldersFromFile.Add(result);
+            //}
+            return AllFoldersInFile;
         }
 
         public void InitializeLinkListsForFile(Panel panel1, TreeView treeView, ProgressBar progressBar)
@@ -207,61 +274,52 @@ namespace OssigweAssignment
                 return;
             }
             var Folders = GetSavedFoldersFromFile(pathForSavedFolder);
-            List<Control> ControlsToAdd = new List<Control>();
-            StringBuilder builder = new StringBuilder();
+
             if (Folders.Count > 0)
             {
-                int yAxis = 38;
-                int counter = 3;
-                int FolderCounter = 0;
+                List<string> NameOfChangedfolders = new List<string>();
 
                 List<string> rootFolder = new List<string>();
                 foreach (var folder in Folders)
                 {
-                    InitializeSearchedFolder init = new InitializeSearchedFolder();
-                    init.LoadDirectory(folder.FolderName, treeView, progressBar);
-                    if (!rootFolder.Exists(x => x.ToString() == folder.FolderName && FolderCounter <= 10))
+                    var CurentFolder = Directory.GetDirectories(folder.FolderName);
+                    var allFilesInCurrentDir = Directory.EnumerateFiles(folder.FolderName, "*.txt*", SearchOption.AllDirectories);
+                    var allFileinFolder = folder.Files;
+                    if (CurentFolder.Count() != folder.NoOfSubDirectories)
                     {
-                        rootFolder.Add(folder.FolderName);
-                        linkFolder = new LinkLabel()
+                        NameOfChangedfolders.Add(folder.FolderName);
+                    }
+                   else if (allFilesInCurrentDir.Count() != allFileinFolder.Count)
+                    {
+                        NameOfChangedfolders.Add(folder.FolderName);
+                    }
+                    else
+                    {
+                        foreach (var item in allFilesInCurrentDir)
                         {
-                            ActiveLinkColor = System.Drawing.Color.Black,
-                            Text = folder.Name,
-                            Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0))),
-                            BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D,
-                            LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline,
-                            LinkColor = System.Drawing.Color.Black,
-                            Name = "linkFolder",
-                            Size = new System.Drawing.Size(257, 38),
-                            TabIndex = counter,
-                            TextAlign = System.Drawing.ContentAlignment.MiddleCenter,
-                            TabStop = true,
-                            Cursor = Cursors.Hand,
-                            Location = new Point(2, yAxis),
-                            LinkArea = new LinkArea(0, 100)
-                        };
-                        linkFolder.Links[0].LinkData = folder.FolderName;
-                        ControlsToAdd.Add(linkFolder);
-
-                        if (linkFolder.Text.Length > 50)
-                        {
-                            linkFolder.Text.Remove(50, (linkFolder.Text.Length - 50));
-                            builder.Append(linkFolder.Text);
-                            builder.Remove(50, (linkFolder.Text.Length - 50));
-                            builder.Append("...");
-                            linkFolder.Text = builder.ToString().ToUpper();
-                            builder.Clear();
+                            var existingItem = folder.Files.Where(X => X.FileFullName == item).FirstOrDefault();
+                            if (existingItem == null)
+                            {
+                                NameOfChangedfolders.Add(folder.FolderName);
+                                break;
+                            }
+                           
                         }
-
-                        yAxis += 50;
-                        counter++;
-                        FolderCounter++;
                     }
                 }
-            }
-            if (ControlsToAdd.Count > 0)
-            {
-                panel1.Controls.AddRange(ControlsToAdd.ToArray());
+                if (NameOfChangedfolders.Count > 0)
+                {
+                    SaveFoldernames(null,NameOfChangedfolders);
+                    InitializeLinkListsForFile(panel1, treeView, progressBar);
+                }
+                treeView.Nodes.Clear();
+                foreach (var folder in Folders)
+                {
+                    InitializeSearchedFolder init = new InitializeSearchedFolder();
+                    
+                    init.LoadDirectory(folder.FolderName, treeView, progressBar);
+                }
+                
             }
         }
 
