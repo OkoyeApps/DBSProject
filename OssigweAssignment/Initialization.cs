@@ -270,7 +270,9 @@ namespace OssigweAssignment
                 var newFileFromBinary = BR.ReadString();
                 var newJsonObject = JsonConvert.DeserializeObject<List<Folder>>(newFileFromBinary);
                 var jsonToAddAgainForTest = JsonConvert.SerializeObject(newJsonObject);
-                File.WriteAllText(@"C:\Users\Emmanuel\Desktop\TestFolderForFiles\temp.json", jsonToAddAgainForTest);
+                //For test purpose you can uncomment this line and pass a pass for the temporary file inorder to check if bin file is the same as the json generated file
+                //File.WriteAllText(@"C:\Users\Emmanuel\Desktop\TestFolderForFiles\temp.json", jsonToAddAgainForTest);
+                BR.Close();
             };
             //JArray jsonObject = JArray.Parse(AllText);
             var AllFoldersInFile = JsonConvert.DeserializeObject<List<Folder>>(AllText);

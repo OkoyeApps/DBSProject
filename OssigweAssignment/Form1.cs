@@ -207,7 +207,7 @@ namespace OssigweAssignment
                     if (node.Checked)
                     {
                         CheckedNodes.Add(node);
-                        isFolder = true;
+                        isFolder = false;
                     }
                     else
                     {
@@ -218,10 +218,10 @@ namespace OssigweAssignment
 
                 }
             }
-            if (isSubFolder)
-            {
-                MessageBox.Show("Sorry you cannot select a sub-folder for Removal. \n This is because the system monitors the root folder and with its sub-folders. \n To delete Sub-folder you have to delete the parent folder");
-            }
+            //if (isSubFolder)
+            //{
+            //    MessageBox.Show("Sorry you cannot select a sub-folder for Removal. \n This is because the system monitors the root folder and with its sub-folders. \n To delete Sub-folder you have to delete the parent folder");
+            //}
             if (CheckedNodes.Count > 0)
             {
             foreach (TreeNode nodeToRemove in CheckedNodes)
