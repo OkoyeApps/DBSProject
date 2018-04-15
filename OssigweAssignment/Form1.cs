@@ -156,7 +156,10 @@ namespace OssigweAssignment
             toolTip1.ShowAlways = true;
             progressBar1.Value = 0;
             var SelectedFolderObject = init.PopulateFolderView();
+            if (SelectedFolderObject != null)
+            {
             init.SaveFoldernames(SelectedFolderObject);
+            }
             init.InitializeLinkListsForFile(this.panel5, this.treeView1, this.progressBar1);
             //RemoveTreeNode();
         }

@@ -57,7 +57,7 @@ namespace OssigweAssignment
             }
             return null;
         }
-       public List<Folder> InitializeFoldersToSave(List<string> selectedPaths)
+        public List<Folder> InitializeFoldersToSave(List<string> selectedPaths)
         {
             if (selectedPaths == null)
                 return null;
@@ -162,6 +162,7 @@ namespace OssigweAssignment
                         counter++;
 
                     }
+                    FolderToAddToJson.Add(folder);
                 }
             }
             if (SelectedPaths != null)
@@ -171,7 +172,7 @@ namespace OssigweAssignment
             }
             if (!File.Exists(pathForSavedFolder))
             {
-                FolderToAddToJson.Add(folder);
+               
                 using (StreamWriter file = File.CreateText(pathForSavedFolder))
                 {
                     //serialize object directly into file stream
@@ -180,6 +181,7 @@ namespace OssigweAssignment
                         Formatting = Formatting.Indented
                     };
                     serializer.Serialize(file, FolderToAddToJson);
+                    
                     ///Know that i made this two files for you to understand what is been formatted.
                     ///At first we create the json file, which is what we all can read. then we create the binary file
                     ///with the binarywriter from the above method.
@@ -196,10 +198,10 @@ namespace OssigweAssignment
             }
             else if (File.Exists(pathForSavedFolder))
             {
+                string UpdatedFileToWrite = "";
                 var currentFoldersInFile = GetSavedFoldersFromFile(pathForSavedFolder);
-                if (currentFoldersInFile.Count > 0)
+                if (currentFoldersInFile != null && currentFoldersInFile.Count > 0)
                 {
-                    string UpdatedFileToWrite = "";
                     var isPathAlreadyInMonitored = currentFoldersInFile.Any(x => x.FolderName == DirectoryInfo.FullName || x.Files.Any(y => y.RootFolder == DirectoryInfo.FullName));
                     var foldercount = currentFoldersInFile.LastOrDefault().No;
                     if (!isPathAlreadyInMonitored)
@@ -218,18 +220,34 @@ namespace OssigweAssignment
                             newChangedFile.Files = folder.Files;
                             newChangedFile.NoOfTxtFiles = folder.NoOfTxtFiles;
                         }
-                        else if(newFolderReturned == true)
+                        else if (newFolderReturned == true)
                         {
                             currentFoldersInFile = FolderToAddToJson;
                         }
                     }
-                    UpdatedFileToWrite = JsonConvert.SerializeObject(currentFoldersInFile);
-                    File.WriteAllText(pathForSavedFolder, UpdatedFileToWrite);
-                    using (BinaryWriter BW = new BinaryWriter(File.Open(PathForBinary, FileMode.OpenOrCreate)))
+                }
+                if (currentFoldersInFile != null)
+                {
+                    if (currentFoldersInFile.Count > 0)
                     {
-                        BW.Write(UpdatedFileToWrite);
-                        BW.Close();
+                    UpdatedFileToWrite = JsonConvert.SerializeObject(currentFoldersInFile);
                     }
+                }
+                else
+                {
+                    UpdatedFileToWrite = JsonConvert.SerializeObject(FolderToAddToJson);
+                }
+                using(StreamWriter SW = File.CreateText(pathForSavedFolder))
+                {
+                     SW.WriteLine(UpdatedFileToWrite);
+                    SW.Close();
+                }
+                //File.WriteAllText(pathForSavedFolder, UpdatedFileToWrite);
+                
+                using (BinaryWriter BW = new BinaryWriter(File.Open(PathForBinary, FileMode.OpenOrCreate)))
+                {
+                    BW.Write(UpdatedFileToWrite);
+                    BW.Close();
                 }
             }
         }
@@ -257,11 +275,11 @@ namespace OssigweAssignment
             //JArray jsonObject = JArray.Parse(AllText);
             var AllFoldersInFile = JsonConvert.DeserializeObject<List<Folder>>(AllText);
             ///Am trying to initiatiate file added and file removal
-            
+
             //foreach (var item in jsonObject.ToList())
             //{
             //    var result = item.ToObject<Folder>(serializer);
-                
+
             //    FoldersFromFile.Add(result);
             //}
             return AllFoldersInFile;
@@ -275,21 +293,23 @@ namespace OssigweAssignment
             }
             var Folders = GetSavedFoldersFromFile(pathForSavedFolder);
 
-            if (Folders.Count > 0)
+            if (Folders != null && Folders.Count > 0)
             {
                 List<string> NameOfChangedfolders = new List<string>();
 
                 List<string> rootFolder = new List<string>();
+
                 foreach (var folder in Folders)
                 {
-                    var CurentFolder = Directory.GetDirectories(folder.FolderName);
-                    var allFilesInCurrentDir = Directory.EnumerateFiles(folder.FolderName, "*.txt*", SearchOption.AllDirectories);
+                    var CurentFolder = Directory.EnumerateDirectories(folder.FolderName, "*", SearchOption.AllDirectories);
+                    var allFilesInCurrentDir = Directory.EnumerateFiles(folder.FolderName, "*", SearchOption.AllDirectories);
+                    var allTextFileInFolder = allFilesInCurrentDir.Where(x => x.EndsWith(".txt") || x.EndsWith(".xml"));
                     var allFileinFolder = folder.Files;
                     if (CurentFolder.Count() != folder.NoOfSubDirectories)
                     {
                         NameOfChangedfolders.Add(folder.FolderName);
                     }
-                   else if (allFilesInCurrentDir.Count() != allFileinFolder.Count)
+                    else if (allTextFileInFolder.Count() != allTextFileInFolder.Count())
                     {
                         NameOfChangedfolders.Add(folder.FolderName);
                     }
@@ -297,33 +317,36 @@ namespace OssigweAssignment
                     {
                         foreach (var item in allFilesInCurrentDir)
                         {
-                            var existingItem = folder.Files.Where(X => X.FileFullName == item).FirstOrDefault();
-                            if (existingItem == null)
+                            if (item.EndsWith(".txt") || item.EndsWith(".xml"))
                             {
-                                NameOfChangedfolders.Add(folder.FolderName);
-                                break;
+                                var existingItem = folder.Files.Where(X => X.FileFullName == item).FirstOrDefault();
+                                if (existingItem == null)
+                                {
+                                    NameOfChangedfolders.Add(folder.FolderName);
+                                    break;
+                                }
                             }
-                           
+
                         }
                     }
                 }
                 if (NameOfChangedfolders.Count > 0)
                 {
-                    SaveFoldernames(null,NameOfChangedfolders);
+                    SaveFoldernames(null, NameOfChangedfolders);
                     InitializeLinkListsForFile(panel1, treeView, progressBar);
                 }
                 treeView.Nodes.Clear();
                 foreach (var folder in Folders)
                 {
                     InitializeSearchedFolder init = new InitializeSearchedFolder();
-                    
+
                     init.LoadDirectory(folder.FolderName, treeView, progressBar);
                 }
-                
+
             }
         }
 
-        public Tuple<List<Control>, List<Control>, List<Control>> SearchWordFromSavedFiles(RichTextBox richTextBox, TextBox textBox, List<Folder> folder,Form1 form)
+        public Tuple<List<Control>, List<Control>, List<Control>> SearchWordFromSavedFiles(RichTextBox richTextBox, TextBox textBox, List<Folder> folder, Form1 form)
         {
             string[] BlackList = new string[] { "is", "a", "the", "of", "this", "how", "all", "ago", "I", "me", "he", "he’ll", "he’s", "she", "she’ll", "she’s", "am", "in", "so", "is", "be", "let", "mr", "mrs", "we", "us", "you", "oh", "ok", "ex" };
             if (textBox.Text.Length > 1 && !BlackList.Contains(textBox.Text))
@@ -369,7 +392,7 @@ namespace OssigweAssignment
                     List<Files> FilesToSearch = new List<Files>();
                     foldersToSearch.ForEach(X => FilesToSearch.AddRange(X.Files));
                     //var FilesToSearch = foldersToSearch.Select(x => new {file = x.Files);
-                    
+
                     //var mainFilesTosearch = FilesToSearch.Select(x => x.Select(y=>new { FileSearch = y }));
                     foreach (var item in FilesToSearch)
                     {
@@ -400,14 +423,14 @@ namespace OssigweAssignment
 
                                 foreach (var word in wordsInLine.ToList())
                                 {
-                                   var isFound =  string.Equals(textBox.Text, word, StringComparison.OrdinalIgnoreCase);
+                                    var isFound = string.Equals(textBox.Text, word, StringComparison.OrdinalIgnoreCase);
                                     if (word.ToLowerInvariant().Contains(textBox.Text.ToLower()))
                                     {
                                         totalOccurence++;
                                         if (matchFound == false)
                                         {
                                             firstLineofWord = allTextRead[stringItem];
-                                            Label label2 = (Label)controlInit.CreateControlForSearchResult(yAxisForFile, allTextRead[stringItem], labelType.col2);
+                                            Label label2 = (Label)controlInit.CreateControlForSearchResult(yAxisForFile, currentFolderToSearch, labelType.col2);
                                             LinkLabel linkLabel = (LinkLabel)controlInit.CreateControlForSearchResult(yAxisForView, allTextRead[stringItem], labelType.col1, form);
                                             LineNoForFirstMatch = stringItem;
                                             matchFound = true;
@@ -432,8 +455,8 @@ namespace OssigweAssignment
                         totalOCcurenceForSavedFile.Add(totalOccurence);
                         var label = controlInit.CreateControlForSearchResult(yAxisForFile, totalOccurence.ToString(), labelType.col3);
                         CountFound.Add(label);
-                      
-                        yAxisForFile += 35;yAxisForView += 35;
+
+                        yAxisForFile += 35; yAxisForView += 35;
                     }
                     matchFound = false;
                     totalOccurence = 0;
@@ -513,7 +536,7 @@ namespace OssigweAssignment
                     previousSearch.searchedFolders = SW.searchedFolders;
                     previousSearch.searched = DateTime.Now;
                     previousSearch.LastSearchedWord = word;
-                      
+
                     File.WriteAllText(pathForSaveFile, JsonConvert.SerializeObject(result));
                     return result;
                 }
