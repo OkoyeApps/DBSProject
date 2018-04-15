@@ -512,7 +512,7 @@ namespace OssigweAssignment
                 {
                     Id = 1,
                     NoOfSearchedTime = 1,
-                    searched = DateTime.Now,
+                    searchedTime = DateTime.Now,
                     Word = word,
                     LastSearchedWord = word
                 };
@@ -536,7 +536,7 @@ namespace OssigweAssignment
                 {
                     previousSearch.NoOfSearchedTime = previousSearch.NoOfSearchedTime + 1;
                     previousSearch.searchedFolders = SW.searchedFolders;
-                    previousSearch.searched = DateTime.Now;
+                    previousSearch.searchedTime = DateTime.Now;
                     previousSearch.LastSearchedWord = word;
 
                     File.WriteAllText(pathForSaveFile, JsonConvert.SerializeObject(result));

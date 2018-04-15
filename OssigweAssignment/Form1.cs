@@ -29,6 +29,7 @@ namespace OssigweAssignment
             toolTip1.ShowAlways = true;
             progressBar1.Value = 0;
             init.InitializeLinkListsForFile(this.panel5, this.treeView1, this.progressBar1);
+            ReportManaager();
             //this.progressBar1.Hide();
         }
         private void button1_Click_1(object sender, EventArgs e)
@@ -49,6 +50,7 @@ namespace OssigweAssignment
                         panel19.Controls.AddRange(result.Item2.ToArray());
                         panel15.Controls.AddRange(result.Item3.ToArray());
                     }
+                    
                     return;
                 }
             }
@@ -132,21 +134,8 @@ namespace OssigweAssignment
             tabControl2.SelectTab(1);
 
             //this is used for the reporting side bar
-            if (File.Exists(pathForSaveFile) && File.Exists(pathForSaveFolder))
-            {
-                var allSearchText = File.ReadAllText(pathForSaveFile);
-                var AllIndexedWord = File.ReadAllText(pathForSaveFolder);
-                var ListOfFolders = JsonConvert.DeserializeObject<List<Folder>>(AllIndexedWord);
-                var TotalIndexedWord = ListOfFolders.Sum(x => x.Files.Sum(y => y.FileLength));
-                var ListOfSearchedWords = JsonConvert.DeserializeObject<List<SearchedWord>>(allSearchText);
-                var mostSearchedOrder =  ListOfSearchedWords.OrderByDescending(x => x.NoOfSearchedTime).ToArray();
-                var highestWordOder = ListOfSearchedWords.OrderByDescending(x => x.Word.Length).ToArray();
-                label14.Text = mostSearchedOrder[0].Word;
-                label16.Text = highestWordOder[0].Word;
-                label15.Text = highestWordOder[highestWordOder.Length -1].Word;
-                label13.Text = arrayOfStringToUser[1];
-                label12.Text = TotalIndexedWord.ToString();
-            } 
+            label13.Text = arrayOfStringToUser[1];
+            ReportManaager();
         }
 
         private void OpenFile_Click(object sender, EventArgs e)
@@ -279,5 +268,41 @@ namespace OssigweAssignment
             }
             return;
         }
+
+        void ReportManaager()
+        {
+            listBox1.Items.Clear();
+            if (File.Exists(pathForSaveFile) && File.Exists(pathForSaveFolder))
+            {
+                var allSearchText = File.ReadAllText(pathForSaveFile);
+                var AllIndexedWord = File.ReadAllText(pathForSaveFolder);
+                var ListOfFolders = JsonConvert.DeserializeObject<List<Folder>>(AllIndexedWord);
+                var TotalIndexedWord = ListOfFolders.Sum(x => x.Files.Sum(y => y.FileLength));
+                var ListOfSearchedWords = JsonConvert.DeserializeObject<List<SearchedWord>>(allSearchText);
+                var mostSearchedOrder = ListOfSearchedWords.OrderByDescending(x => x.NoOfSearchedTime).ToArray();
+                var highestWordOder = ListOfSearchedWords.OrderByDescending(x => x.Word.Length).ToArray();
+                label14.Text = label22.Text =  mostSearchedOrder[0].Word;
+                label16.Text = label20.Text =  highestWordOder[0].Word;
+                label15.Text = label21.Text= highestWordOder[highestWordOder.Length - 1].Word;
+                
+                label12.Text = label18.Text =  TotalIndexedWord.ToString();
+                int count = 1;
+                foreach (var item in mostSearchedOrder.OrderByDescending(X=>X.searchedTime))
+                {
+                    if (count <26)
+                    {
+                        string valueToAdd = $"{count}- Word: {item.Word}, \n Time- {item.searchedTime.ToLocalTime()}";
+                        listBox1.Items.Add(valueToAdd);
+                    }
+                    else
+                    {
+                        return;
+                    }
+                        count++;
+                   
+                }
+            }
+        }
+       
     }
 }
