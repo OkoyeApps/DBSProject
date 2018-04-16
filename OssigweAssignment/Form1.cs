@@ -29,7 +29,8 @@ namespace OssigweAssignment
             toolTip1.ShowAlways = true;
             progressBar1.Value = 0;
             init.InitializeLinkListsForFile(this.panel5, this.treeView1, this.progressBar1);
-            ReportManaager();
+            ReportManager();
+            //init.ReadHtmlpage(@"C:\Users\Emmanuel\Desktop\test.html");
             //this.progressBar1.Hide();
         }
         private void button1_Click_1(object sender, EventArgs e)
@@ -135,7 +136,7 @@ namespace OssigweAssignment
 
             //this is used for the reporting side bar
             label13.Text = arrayOfStringToUser[1];
-            ReportManaager();
+            ReportManager();
         }
 
         private void OpenFile_Click(object sender, EventArgs e)
@@ -150,7 +151,7 @@ namespace OssigweAssignment
             init.SaveFoldernames(SelectedFolderObject);
             }
             init.InitializeLinkListsForFile(this.panel5, this.treeView1, this.progressBar1);
-            //RemoveTreeNode();
+            ReportManager();
         }
 
         private void treeView1_MouseMove(object sender, MouseEventArgs e)
@@ -247,6 +248,7 @@ namespace OssigweAssignment
                     }
                 }
             }
+            ReportManager();
         }
         //This method was used to recursively check throug child Nodes if it is been checked.
        void RecursiveNodeRemoval(TreeNodeCollection nodes)
@@ -269,15 +271,28 @@ namespace OssigweAssignment
             return;
         }
 
-        void ReportManaager()
+        void ReportManager()
         {
             listBox1.Items.Clear();
-            if (File.Exists(pathForSaveFile) && File.Exists(pathForSaveFolder))
+            string AllIndexedWord = "";
+            long TotalIndexedWord = 0;
+            List<Folder> ListOfFolders = new List<Folder>();
+            if (File.Exists(pathForSaveFolder))
+            {
+                 AllIndexedWord = File.ReadAllText(pathForSaveFolder);
+                 ListOfFolders = JsonConvert.DeserializeObject<List<Folder>>(AllIndexedWord);
+                if (ListOfFolders != null)
+                {
+                 TotalIndexedWord = ListOfFolders.Sum(x => x.Files.Sum(y => y.FileLength));
+                }
+            }
+            if (File.Exists(pathForSaveFile))
             {
                 var allSearchText = File.ReadAllText(pathForSaveFile);
-                var AllIndexedWord = File.ReadAllText(pathForSaveFolder);
-                var ListOfFolders = JsonConvert.DeserializeObject<List<Folder>>(AllIndexedWord);
-                var TotalIndexedWord = ListOfFolders.Sum(x => x.Files.Sum(y => y.FileLength));
+                
+               
+                //var aa = ListOfFolders[0].Files;
+                //var bb = aa.Sum(x => x.FileLength);
                 var ListOfSearchedWords = JsonConvert.DeserializeObject<List<SearchedWord>>(allSearchText);
                 var mostSearchedOrder = ListOfSearchedWords.OrderByDescending(x => x.NoOfSearchedTime).ToArray();
                 var highestWordOder = ListOfSearchedWords.OrderByDescending(x => x.Word.Length).ToArray();
@@ -298,11 +313,31 @@ namespace OssigweAssignment
                     {
                         return;
                     }
-                        count++;
-                   
+                    count++;                
                 }
             }
         }
-       
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            var Path = textBox2.Text;
+            if (!string.IsNullOrEmpty(Path))
+            {
+              var result =  init.GetAndReadHtmlPage(Path);
+                if (result.Item1 != null)
+                {
+                        listBox2.DataSource = result.Item1;  
+                }
+                if (result.Item2 != null)
+                {
+                        listBox4.DataSource = result.Item2;
+                }
+                if (result.Item3 != null)
+                {
+                        listBox3.DataSource = result.Item3;
+                }
+
+            }
+        }
     }
 }

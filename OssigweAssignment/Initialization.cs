@@ -5,7 +5,9 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -117,6 +119,8 @@ namespace OssigweAssignment
         {
             List<Folder> FolderToAddToJson = new List<Folder>();
             bool newFolderReturned = false;
+            Dictionary<string, long> FileAndLength = new Dictionary<string, long>();
+            long totalLengthOfFilesInDirectory = 0;
             if (folderDialog != null)
             {
                 var TempFolderName = folderDialog.SelectedPath;
@@ -142,6 +146,7 @@ namespace OssigweAssignment
                     folder.TimeFound = DateTime.Now.Date.ToLocalTime();
                     folder.NoOfSubDirectories = allSubDirectories.Count();
                     folder.Name = text;
+                    totalLengthOfFilesInDirectory = allFIlesInDirectory.Sum(x => x.Length);
                     foreach (var item in allFIlesInDirectory)
                     {
                         if (item.Extension == ".txt" || item.Extension == ".xml")
@@ -159,6 +164,7 @@ namespace OssigweAssignment
                             };
                             folder.Files.Add(file);
                         }
+                        FileAndLength.Add(item.FullName, item.Length);
                         counter++;
 
                     }
@@ -172,7 +178,7 @@ namespace OssigweAssignment
             }
             if (!File.Exists(pathForSavedFolder))
             {
-               
+
                 using (StreamWriter file = File.CreateText(pathForSavedFolder))
                 {
                     //serialize object directly into file stream
@@ -181,7 +187,7 @@ namespace OssigweAssignment
                         Formatting = Formatting.Indented
                     };
                     serializer.Serialize(file, FolderToAddToJson);
-                    
+
                     ///Know that i made this two files for you to understand what is been formatted.
                     ///At first we create the json file, which is what we all can read. then we create the binary file
                     ///with the binarywriter from the above method.
@@ -200,6 +206,18 @@ namespace OssigweAssignment
             {
                 string UpdatedFileToWrite = "";
                 var currentFoldersInFile = GetSavedFoldersFromFile(pathForSavedFolder);
+                List<Files> currentFolderFiled = new List<Files>();
+                if (currentFoldersInFile != null && currentFoldersInFile.Count > 0)
+                {
+                    foreach (var item in currentFoldersInFile)
+                    {
+                        item.Files.ForEach(x => currentFolderFiled.Add(x));
+                    }
+                    foreach (var item in currentFolderFiled)
+                    {
+                        FileAndLength.Add(item.FileFullName, item.FileLength);
+                    }
+                }
                 if (currentFoldersInFile != null && currentFoldersInFile.Count > 0)
                 {
                     var isPathAlreadyInMonitored = currentFoldersInFile.Any(x => x.FolderName == DirectoryInfo.FullName || x.Files.Any(y => y.RootFolder == DirectoryInfo.FullName));
@@ -211,14 +229,59 @@ namespace OssigweAssignment
                     }
                     else if (isPathAlreadyInMonitored)
                     {
-                        var newChangedFile = currentFoldersInFile.Where(x => x.FolderName == DirectoryInfo.FullName && x.NoOfSubDirectories != folder.NoOfSubDirectories || x.NoOfTxtFiles != folder.NoOfTxtFiles).FirstOrDefault();
+                        Folder newChangedFile = new Folder();
+                        var allFileLength = currentFoldersInFile.Sum(X => X.Files.Sum(x => x.FileLength));
+                        long currentFileLength = 0;
 
+                        ///this foreach actually was used to make sure that if any file is changed then the indexed words changes accordingly.
+                        ///if might be a little bit confusing but the logic is this
+                        ///when a file changes either by increasing or decreasing, then the file length changes also.
+                        ///so we check if the file length that we indexed and the file length from the system is same
+                        ///if they are not, then we we get that folder and update it with the current files.
+                        ///this is done so as to always keep track of files since we are not using a windows service to update or indexes.
+
+                        foreach (var item in currentFoldersInFile)
+                        {
+                            var file = item.Files;
+                            foreach (var item2 in file)
+                            {
+                                if (FileAndLength.ContainsKey(item2.FileFullName))
+                                {
+                                    var currentFile = FileAndLength[item2.FileFullName];
+                                    if (currentFile != item2.FileLength)
+                                    {
+                                        currentFileLength = currentFile;
+                                    }
+                                    DirectoryInfo Di = new DirectoryInfo(item.FolderName);
+                                    var filesinSystemDirectory = Di.EnumerateFiles("*.txt*", SearchOption.AllDirectories);
+                                    var FIleToCheck = filesinSystemDirectory.Where(x => x.FullName == item2.FileFullName).FirstOrDefault();
+                                    if (FIleToCheck.Length != item2.FileLength)
+                                    {
+                                        newChangedFile = item;
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        newChangedFile = currentFoldersInFile.Where(x => x.FolderName == DirectoryInfo.FullName && x.NoOfSubDirectories != folder.NoOfSubDirectories || x.NoOfTxtFiles != folder.NoOfTxtFiles).FirstOrDefault();
+                                    }
+                                }
+                            }
+                        }
                         if (newChangedFile != null)
                         {
-                            newChangedFile.NoOfFiles = folder.NoOfFiles;
-                            newChangedFile.NoOfSubDirectories = folder.NoOfSubDirectories;
-                            newChangedFile.Files = folder.Files;
-                            newChangedFile.NoOfTxtFiles = folder.NoOfTxtFiles;
+                            if (folder != null)
+                            {
+                                newChangedFile.NoOfFiles = folder.NoOfFiles;
+                                newChangedFile.NoOfSubDirectories = folder.NoOfSubDirectories;
+                                newChangedFile.Files = folder.Files;
+                                newChangedFile.NoOfTxtFiles = folder.NoOfTxtFiles;
+                            }
+                            else
+                            {
+                                FolderBrowserDialog ff = new FolderBrowserDialog();
+                                ff.SelectedPath = newChangedFile.FolderName;
+                                SaveFoldernames(ff);
+                            }
                         }
                         else if (newFolderReturned == true)
                         {
@@ -226,24 +289,24 @@ namespace OssigweAssignment
                         }
                     }
                 }
-                if (currentFoldersInFile != null)
+                if (currentFoldersInFile != null && currentFoldersInFile.Count >0 )
                 {
                     if (currentFoldersInFile.Count > 0)
                     {
-                    UpdatedFileToWrite = JsonConvert.SerializeObject(currentFoldersInFile);
+                        UpdatedFileToWrite = JsonConvert.SerializeObject(currentFoldersInFile);
                     }
                 }
                 else
                 {
                     UpdatedFileToWrite = JsonConvert.SerializeObject(FolderToAddToJson);
                 }
-                using(StreamWriter SW = File.CreateText(pathForSavedFolder))
+                using (StreamWriter SW = File.CreateText(pathForSavedFolder))
                 {
-                     SW.WriteLine(UpdatedFileToWrite);
+                    SW.WriteLine(UpdatedFileToWrite);
                     SW.Close();
                 }
                 //File.WriteAllText(pathForSavedFolder, UpdatedFileToWrite);
-                
+
                 using (BinaryWriter BW = new BinaryWriter(File.Open(PathForBinary, FileMode.OpenOrCreate)))
                 {
                     BW.Write(UpdatedFileToWrite);
@@ -263,7 +326,13 @@ namespace OssigweAssignment
             };
             FoldersFromFile.Clear();
             //This reads the Json file
-            var AllText = File.ReadAllText(path);
+            string AllText = "";
+            //var AllText = File.ReadAllText(path);
+            using (StreamReader SR = new StreamReader(File.OpenRead(path)))
+            {
+                AllText = SR.ReadToEnd();
+                SR.Close();
+            }
             //This reads the binary File
             using (BinaryReader BR = new BinaryReader(File.Open(PathForBinary, FileMode.Open)))
             {
@@ -274,16 +343,10 @@ namespace OssigweAssignment
                 //File.WriteAllText(@"C:\Users\Emmanuel\Desktop\TestFolderForFiles\temp.json", jsonToAddAgainForTest);
                 BR.Close();
             };
-            //JArray jsonObject = JArray.Parse(AllText);
             var AllFoldersInFile = JsonConvert.DeserializeObject<List<Folder>>(AllText);
             ///Am trying to initiatiate file added and file removal
 
-            //foreach (var item in jsonObject.ToList())
-            //{
-            //    var result = item.ToObject<Folder>(serializer);
 
-            //    FoldersFromFile.Add(result);
-            //}
             return AllFoldersInFile;
         }
 
@@ -303,15 +366,20 @@ namespace OssigweAssignment
 
                 foreach (var folder in Folders)
                 {
+                    DirectoryInfo Di = new DirectoryInfo(folder.FolderName);
+                    //var AllFileCountInDirectory = Di.EnumerateFiles()
                     var CurentFolder = Directory.EnumerateDirectories(folder.FolderName, "*", SearchOption.AllDirectories);
-                    var allFilesInCurrentDir = Directory.EnumerateFiles(folder.FolderName, "*", SearchOption.AllDirectories);
-                    var allTextFileInFolder = allFilesInCurrentDir.Where(x => x.EndsWith(".txt") || x.EndsWith(".xml"));
+                    var allFilesInCurrentDir = Di.EnumerateFiles("*", SearchOption.AllDirectories);
+                    var allTextFileInFolder = allFilesInCurrentDir.Where(x => x.Extension.EndsWith(".txt") || x.Extension.EndsWith(".xml"));
                     var allFileinFolder = folder.Files;
+                    var allFIleLengthCount = allFilesInCurrentDir.Where(x => x.Extension == ".txt" || x.Extension == ".xml").Sum(x => x.Length);
+                    var bb = allFileinFolder.Sum(x => x.FileLength);
+                    var lengthCountOfDirectoryInfo = allTextFileInFolder.Sum(x => x.Length);
                     if (CurentFolder.Count() != folder.NoOfSubDirectories)
                     {
                         NameOfChangedfolders.Add(folder.FolderName);
                     }
-                    else if (allTextFileInFolder.Count() != allTextFileInFolder.Count())
+                    else if (allTextFileInFolder.Count() != allTextFileInFolder.Count() || lengthCountOfDirectoryInfo != allFileinFolder.Sum(x => x.FileLength))
                     {
                         NameOfChangedfolders.Add(folder.FolderName);
                     }
@@ -319,9 +387,9 @@ namespace OssigweAssignment
                     {
                         foreach (var item in allFilesInCurrentDir)
                         {
-                            if (item.EndsWith(".txt") || item.EndsWith(".xml"))
+                            if (item.Extension.EndsWith(".txt") || item.Extension.EndsWith(".xml"))
                             {
-                                var existingItem = folder.Files.Where(X => X.FileFullName == item).FirstOrDefault();
+                                var existingItem = folder.Files.Where(X => X.FileFullName == item.FullName).FirstOrDefault();
                                 if (existingItem == null)
                                 {
                                     NameOfChangedfolders.Add(folder.FolderName);
@@ -556,6 +624,71 @@ namespace OssigweAssignment
                 File.WriteAllText(pathForSaveFile, AllSavedFileText);
             }
             return SearchedWordFromFile;
+        }
+
+        public Tuple<List<string>, List<string>, List<string>> GetAndReadHtmlPage(string path)
+        {
+            List<string> AllTitle = new List<string>();
+            List<string> AllScript = new List<string>();
+            List<string> AllAnchor = new List<string>();
+            string readFile = null;
+            if (path.StartsWith("http://") || path.StartsWith("www"))
+            {
+                WebClient web = new WebClient();
+                try
+                {
+                readFile = web.DownloadString(path);
+                }
+                catch(Exception ex)
+                {
+
+                }
+            }
+            if (File.Exists(path) && path.EndsWith(".html"))
+            {
+                 readFile = File.ReadAllText(path);
+            }
+            if (!string.IsNullOrEmpty(readFile))
+            {
+                MatchCollection allTitle = Regex.Matches(readFile, @"<title>\s*(.+?)\s*</title>", RegexOptions.Singleline);
+                MatchCollection allScript = Regex.Matches(readFile, @"<script*(.+?)>\s*(.+?)\s*</script>", RegexOptions.Singleline);
+                MatchCollection allATag = Regex.Matches(readFile, @"<a \s*(.+?)>\s*(.+?)\s*</a>", RegexOptions.Singleline);
+                foreach (Match item in allTitle.AsParallel())
+                {
+                    string text = item.Groups[1].Value;
+                    AllTitle.Add(text);
+                    Console.WriteLine(text);
+                }
+                foreach (Match item in allScript.AsParallel())
+                {                       
+                    //Console.WriteLine(item.Groups[2].Value);
+                    //AllScript.Add(item.Groups[2].Value);
+                    if (item.Groups[2].Value.Contains("<script"))
+                    {
+                        AllScript.Add(item.Groups[3].Value);
+                        Console.WriteLine(item.Groups[3].Value);
+                    }
+                    else
+                    {
+                        AllScript.Add(item.Groups[2].Value);
+                        Console.WriteLine(item.Groups[2].Value);
+                    }
+                }
+                foreach (Match item in allATag.AsParallel())
+                {
+                    if (item.Groups[2].Value.Contains("<a"))
+                    {
+                        AllAnchor.Add(item.Groups[3].Value);
+                        Console.WriteLine(item.Groups[3].Value);
+                    }
+                    else
+                    {
+                        AllAnchor.Add(item.Groups[2].Value);
+                        Console.WriteLine(item.Groups[2].Value);
+                    }
+                }
+            }
+            return Tuple.Create(AllTitle, AllScript, AllAnchor);
         }
     }
 }
