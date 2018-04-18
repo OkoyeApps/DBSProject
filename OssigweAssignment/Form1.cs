@@ -321,6 +321,9 @@ namespace OssigweAssignment
         private void button3_Click(object sender, EventArgs e)
         {
             var Path = textBox2.Text;
+            listBox2.Items.Clear();
+            listBox3.Items.Clear();
+            listBox4.Items.Clear();
             if (!string.IsNullOrEmpty(Path))
             {
               var result =  init.GetAndReadHtmlPage(Path);

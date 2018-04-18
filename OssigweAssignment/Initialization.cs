@@ -661,8 +661,7 @@ namespace OssigweAssignment
                 }
                 foreach (Match item in allScript.AsParallel())
                 {                       
-                    //Console.WriteLine(item.Groups[2].Value);
-                    //AllScript.Add(item.Groups[2].Value);
+
                     if (item.Groups[2].Value.Contains("<script"))
                     {
                         AllScript.Add(item.Groups[3].Value);
